@@ -1,2 +1,5 @@
 run this first.py
 input/
+__pycache__
+*secret*
+*.dot
