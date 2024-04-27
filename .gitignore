@@ -1,5 +1,6 @@
 __pycache__
 *.csv
+*.json
 *secret*
 input/
 *.dot
