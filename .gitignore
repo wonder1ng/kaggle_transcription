@@ -6,4 +6,5 @@ input/
 *.dot
 *복사본*
 * copy.*
+*.hdf5
 run this first.py
