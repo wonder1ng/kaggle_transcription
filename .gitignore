@@ -2,6 +2,8 @@ __pycache__
 *.csv
 *.json
 *secret*
+*temp*
+*tmp*
 input/
 *.dot
 *복사본*
