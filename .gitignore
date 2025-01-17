@@ -10,3 +10,7 @@ input/
 * copy.*
 *.hdf5
 run this first.py
+*.keras
+*.hdf5
+*.h5
+*model*
