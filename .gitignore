@@ -17,3 +17,4 @@ run this first.py
 *.zip
 *.7z
 *.tar
+.empty
