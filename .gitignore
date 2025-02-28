@@ -18,3 +18,4 @@ run this first.py
 *.7z
 *.tar
 .empty
+*.npy*
