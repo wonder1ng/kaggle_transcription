@@ -19,3 +19,4 @@ run this first.py
 *.tar
 .empty
 *.npy*
+*working*
