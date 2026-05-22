@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Kaggle Competitions Viewer</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      padding: 20px;
+      font-family: Arial, sans-serif;
+      background: #f5f5f5;
+    }
+
+    h1 {
+      margin-bottom: 20px;
+    }
+
+    .top-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+      margin-bottom: 20px;
+      background: white;
+      padding: 16px;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+
+    .control-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    label {
+      font-size: 14px;
+      font-weight: bold;
+    }
+
+    select,
+    input {
+      padding: 8px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      min-width: 180px;
+    }
+
+    .stats {
+      margin-bottom: 16px;
+      font-size: 14px;
+    }
+
+    .card-container {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .card {
+      background: white;
+      border-radius: 14px;
+      padding: 16px;
+      cursor: pointer;
+      transition: all 0.25s ease;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      overflow: hidden;
+    }
+
+    .card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+    }
+
+    .card.expanded {
+      padding: 24px;
+    }
+
+    .title-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .title {
+      font-size: 20px;
+      font-weight: bold;
+      color: #222;
+      flex: 1;
+    }
+
+    .open-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      text-decoration: none;
+      padding: 8px 14px;
+      border-radius: 10px;
+      background: #222;
+      color: white;
+      font-size: 14px;
+      transition: 0.2s;
+    }
+
+    .open-btn:hover {
+      background: #444;
+    }
+
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .summary-item {
+      background: #f8f8f8;
+      padding: 10px;
+      border-radius: 10px;
+      font-size: 14px;
+    }
+
+    .summary-item strong {
+      display: block;
+      margin-bottom: 4px;
+      color: #555;
+    }
+
+    .description {
+      line-height: 1.6;
+      margin-bottom: 14px;
+      white-space: pre-wrap;
+    }
+
+    .details {
+      display: none;
+      margin-top: 18px;
+      border-top: 1px solid #ddd;
+      padding-top: 18px;
+    }
+
+    .card.expanded .details {
+      display: block;
+    }
+
+    .details-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 10px;
+    }
+
+    .detail-item {
+      background: #f7f7f7;
+      padding: 10px;
+      border-radius: 10px;
+      overflow-wrap: anywhere;
+    }
+
+    .detail-key {
+      font-weight: bold;
+      margin-bottom: 6px;
+      color: #444;
+    }
+
+    .json-view {
+      background: #111;
+      color: #0f0;
+      padding: 14px;
+      border-radius: 10px;
+      overflow-x: auto;
+      margin-top: 16px;
+      font-size: 12px;
+      max-height: 500px;
+      overflow-y: auto;
+    }
+
+    .empty {
+      background: white;
+      padding: 30px;
+      border-radius: 12px;
+      text-align: center;
+      color: #666;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Kaggle Competitions Viewer</h1>
+
+  <div class="top-bar">
+
+    <div class="control-group">
+      <label for="sortTeamCount">Team Count 정렬</label>
+      <select id="sortTeamCount">
+        <option value="none">정렬 안 함</option>
+        <option value="desc">내림차순</option>
+        <option value="asc">오름차순</option>
+      </select>
+    </div>
+
+    <div class="control-group">
+      <label for="sortEnabledDate">Enabled Date 정렬</label>
+      <select id="sortEnabledDate">
+        <option value="none">정렬 안 함</option>
+        <option value="desc">최신순</option>
+        <option value="asc">오래된순</option>
+      </select>
+    </div>
+
+    <div class="control-group">
+      <label for="sortDeadline">Deadline 정렬</label>
+      <select id="sortDeadline">
+        <option value="none">정렬 안 함</option>
+        <option value="desc">최신순</option>
+        <option value="asc">오래된순</option>
+      </select>
+    </div>
+
+    <div class="control-group">
+      <label for="enabledFrom">Enabled Date 시작</label>
+      <input type="date" id="enabledFrom" />
+    </div>
+
+    <div class="control-group">
+      <label for="enabledTo">Enabled Date 끝</label>
+      <input type="date" id="enabledTo" />
+    </div>
+
+    <div class="control-group">
+      <label for="deadlineFrom">Deadline 시작</label>
+      <input type="date" id="deadlineFrom" />
+    </div>
+
+    <div class="control-group">
+      <label for="deadlineTo">Deadline 끝</label>
+      <input type="date" id="deadlineTo" />
+    </div>
+
+  </div>
+
+  <div class="stats" id="stats"></div>
+
+  <div class="card-container" id="cardContainer"></div>
+
+  <script>
+
+    // =====================================================
+    // JSON 파일명
+    // =====================================================
+
+    const JSON_FILE = 'all_competitions_detail.json';
+
+    // =====================================================
+    // 상태
+    // =====================================================
+
+    let originalData = [];
+    let filteredData = [];
+
+    // =====================================================
+    // 요소
+    // =====================================================
+
+    const cardContainer = document.getElementById('cardContainer');
+    const stats = document.getElementById('stats');
+
+    const sortTeamCount = document.getElementById('sortTeamCount');
+    const sortEnabledDate = document.getElementById('sortEnabledDate');
+    const sortDeadline = document.getElementById('sortDeadline');
+
+    const enabledFrom = document.getElementById('enabledFrom');
+    const enabledTo = document.getElementById('enabledTo');
+
+    const deadlineFrom = document.getElementById('deadlineFrom');
+    const deadlineTo = document.getElementById('deadlineTo');
+
+    // =====================================================
+    // 유틸
+    // =====================================================
+
+    function parseDate(value) {
+      if (!value) return null;
+
+      const d = new Date(value);
+
+      if (isNaN(d.getTime())) return null;
+
+      return d;
+    }
+
+    function formatDate(value) {
+      if (!value) return '-';
+
+      const d = parseDate(value);
+
+      if (!d) return value;
+
+      return d.toLocaleString();
+    }
+
+    // =====================================================
+    // 필터링
+    // =====================================================
+
+    function applyFiltersAndSort() {
+
+      filteredData = [...originalData];
+
+      // ---------------------------------------------------
+      // enabledDate 필터
+      // ---------------------------------------------------
+
+      const enabledFromDate = enabledFrom.value
+        ? new Date(enabledFrom.value)
+        : null;
+
+      const enabledToDate = enabledTo.value
+        ? new Date(enabledTo.value + 'T23:59:59')
+        : null;
+
+      if (enabledFromDate || enabledToDate) {
+
+        filteredData = filteredData.filter(item => {
+
+          const d = parseDate(item.enabledDate);
+
+          if (!d) return false;
+
+          if (enabledFromDate && d < enabledFromDate) {
+            return false;
+          }
+
+          if (enabledToDate && d > enabledToDate) {
+            return false;
+          }
+
+          return true;
+        });
+      }
+
+      // ---------------------------------------------------
+      // deadline 필터
+      // ---------------------------------------------------
+
+      const deadlineFromDate = deadlineFrom.value
+        ? new Date(deadlineFrom.value)
+        : null;
+
+      const deadlineToDate = deadlineTo.value
+        ? new Date(deadlineTo.value + 'T23:59:59')
+        : null;
+
+      if (deadlineFromDate || deadlineToDate) {
+
+        filteredData = filteredData.filter(item => {
+
+          const d = parseDate(item.deadline);
+
+          if (!d) return false;
+
+          if (deadlineFromDate && d < deadlineFromDate) {
+            return false;
+          }
+
+          if (deadlineToDate && d > deadlineToDate) {
+            return false;
+          }
+
+          return true;
+        });
+      }
+
+      // ---------------------------------------------------
+      // 다중 정렬
+      // ---------------------------------------------------
+
+      filteredData.sort((a, b) => {
+
+        // teamCount
+        if (sortTeamCount.value !== 'none') {
+
+          const av = a.teamCount || 0;
+          const bv = b.teamCount || 0;
+
+          if (av !== bv) {
+            return sortTeamCount.value === 'desc'
+              ? bv - av
+              : av - bv;
+          }
+        }
+
+        // enabledDate
+        if (sortEnabledDate.value !== 'none') {
+
+          const av = parseDate(a.enabledDate)?.getTime() || 0;
+          const bv = parseDate(b.enabledDate)?.getTime() || 0;
+
+          if (av !== bv) {
+            return sortEnabledDate.value === 'desc'
+              ? bv - av
+              : av - bv;
+          }
+        }
+
+        // deadline
+        if (sortDeadline.value !== 'none') {
+
+          const av = parseDate(a.deadline)?.getTime() || 0;
+          const bv = parseDate(b.deadline)?.getTime() || 0;
+
+          if (av !== bv) {
+            return sortDeadline.value === 'desc'
+              ? bv - av
+              : av - bv;
+          }
+        }
+
+        return 0;
+      });
+
+      renderCards();
+    }
+
+    // =====================================================
+    // 카드 렌더링
+    // =====================================================
+
+    function renderCards() {
+
+      cardContainer.innerHTML = '';
+
+      stats.textContent = `총 ${filteredData.length.toLocaleString()}개 표시 중`;
+
+      if (filteredData.length === 0) {
+
+        cardContainer.innerHTML = `
+          <div class="empty">
+            표시할 데이터가 없습니다.
+          </div>
+        `;
+
+        return;
+      }
+
+      filteredData.forEach(item => {
+
+        const card = document.createElement('div');
+        card.className = 'card';
+
+        const detailItems = Object.entries(item)
+          .map(([key, value]) => {
+
+            const displayValue = typeof value === 'object'
+              ? JSON.stringify(value, null, 2)
+              : value;
+
+            return `
+              <div class="detail-item">
+                <div class="detail-key">${key}</div>
+                <div>${displayValue}</div>
+              </div>
+            `;
+          })
+          .join('');
+
+        card.innerHTML = `
+          <div class="title-row">
+
+            <div class="title">
+              ${item.title || '-'}
+            </div>
+
+            <a
+              class="open-btn"
+              href="${item.url || '#'}"
+              target="_blank"
+              onclick="event.stopPropagation()"
+            >
+              이동
+            </a>
+
+          </div>
+
+          <div class="summary-grid">
+
+            <div class="summary-item">
+              <strong>Team Count</strong>
+              ${item.teamCount ?? '-'}
+            </div>
+
+            <div class="summary-item">
+              <strong>Enabled Date</strong>
+              ${formatDate(item.enabledDate)}
+            </div>
+
+            <div class="summary-item">
+              <strong>Deadline</strong>
+              ${formatDate(item.deadline)}
+            </div>
+
+            <div class="summary-item">
+              <strong>URL</strong>
+              <a
+                href="${item.url || '#'}"
+                target="_blank"
+                onclick="event.stopPropagation()"
+              >
+                ${item.url || '-'}
+              </a>
+            </div>
+
+          </div>
+
+          <div class="description">
+            ${item.description || '-'}
+          </div>
+
+          <div class="details">
+
+            <h3>전체 데이터</h3>
+
+            <div class="details-grid">
+              ${detailItems}
+            </div>
+
+            <div class="json-view">
+<pre>${JSON.stringify(item, null, 2)}</pre>
+            </div>
+
+          </div>
+        `;
+
+        card.addEventListener('click', () => {
+          card.classList.toggle('expanded');
+        });
+
+        cardContainer.appendChild(card);
+      });
+    }
+
+    // =====================================================
+    // 이벤트
+    // =====================================================
+
+    [
+      sortTeamCount,
+      sortEnabledDate,
+      sortDeadline,
+      enabledFrom,
+      enabledTo,
+      deadlineFrom,
+      deadlineTo
+    ].forEach(el => {
+
+      el.addEventListener('change', applyFiltersAndSort);
+    });
+
+    // =====================================================
+    // 데이터 로드
+    // =====================================================
+
+    async function loadData() {
+
+      try {
+
+        const response = await fetch(JSON_FILE);
+
+        originalData = await response.json();
+
+        applyFiltersAndSort();
+
+      } catch (err) {
+
+        console.error(err);
+
+        cardContainer.innerHTML = `
+          <div class="empty">
+            JSON 로드 실패<br><br>
+            ${JSON_FILE} 파일이 HTML과 같은 폴더에 있는지 확인하세요.
+          </div>
+        `;
+      }
+    }
+
+    loadData();
+
+  </script>
+
+</body>
+</html>
